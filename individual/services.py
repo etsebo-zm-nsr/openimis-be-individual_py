@@ -503,13 +503,22 @@ class GroupAndGroupIndividualAlignmentService:
         if primary_exists:
             return
 
-        new_primary = group_individuals.first()
+        # Prefer the head when the group has one. `first()` is unordered, so without
+        # this the primary recipient is whichever member the database happens to return
+        # - in a benefit context that decides who gets paid.
+        new_primary = group_individuals.filter(role=GroupIndividual.Role.HEAD).first() \
+            or group_individuals.first()
 
         if not new_primary:
             return
 
         new_primary.recipient_type = GroupIndividual.RecipientType.PRIMARY
-        if not head_exists:
+        # Only appoint a head if this member has no role of its own. Overwriting a
+        # declared role destroys it: the member is created with, say, SON, is promoted
+        # to HEAD here because the group is still being assembled and has no head yet,
+        # and when the real head is created moments later `_change_head` sets this
+        # member's role to None - SON is gone, and nothing reports it.
+        if not head_exists and not new_primary.role:
             new_primary.role = GroupIndividual.Role.HEAD
         new_primary.save(user=self.user)
 
