@@ -506,12 +506,19 @@ class GroupAndGroupIndividualAlignmentService:
         if group.location_id == individual.location_id:
             return
 
-        if role == GroupIndividual.Role.HEAD and group.location_id is None:
-            group.location_id = individual.location_id
-            group.save(user=self.user)
-        else:
-            individual.location_id = group.location_id
-            individual.save(user=self.user)
+        if group.location_id is None:
+            if role == GroupIndividual.Role.HEAD:
+                group.location_id = individual.location_id
+                group.save(user=self.user)
+            # Only the head gives a group its location. Until the group has one, a member's
+            # own location is the only record of where they live - overwriting it with None
+            # destroys valid data without making anything consistent. A group whose head is
+            # never added (e.g. the head's record was rejected on import) would otherwise
+            # leave every one of its members with no location at all.
+            return
+
+        individual.location_id = group.location_id
+        individual.save(user=self.user)
 
     def _assure_primary_recipient_in_group(self, group):
         group_individuals = GroupIndividual.objects.filter(group=group, is_deleted=False)
