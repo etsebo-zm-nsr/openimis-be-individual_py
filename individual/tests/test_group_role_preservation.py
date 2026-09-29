@@ -61,6 +61,33 @@ class GroupRolePreservationTest(TestCase):
         self.assertEqual(roles["Parent"][1], GroupIndividual.RecipientType.PRIMARY)
         self.assertIsNone(roles["Child"][1])
 
+    def test_head_created_last_without_a_declared_recipient_becomes_primary(self):
+        """Payload order must not decide who gets paid.
+
+        Without a declared primary, the first-saved member is given PRIMARY by the
+        fallback while the group is still headless. When the head is saved afterwards
+        a primary already exists, so the fallback never reconsiders it.
+        """
+        group_id = self._group_with([
+            ("Child", GroupIndividual.Role.SON, None),
+            ("Parent", GroupIndividual.Role.HEAD, None),
+        ])
+        roles = self._roles(group_id)
+        self.assertEqual(roles["Parent"], (GroupIndividual.Role.HEAD, GroupIndividual.RecipientType.PRIMARY))
+        self.assertEqual(roles["Child"], (GroupIndividual.Role.SON, None))
+
+    def test_a_declared_non_head_primary_is_kept(self):
+        """Preferring the head is only a fallback; an explicit choice of recipient stands."""
+        group_id = self._group_with([
+            ("Child", GroupIndividual.Role.SON, None),
+            ("Parent", GroupIndividual.Role.HEAD, None),
+            ("Mother", GroupIndividual.Role.SPOUSE, GroupIndividual.RecipientType.PRIMARY),
+        ])
+        roles = self._roles(group_id)
+        self.assertEqual(roles["Mother"], (GroupIndividual.Role.SPOUSE, GroupIndividual.RecipientType.PRIMARY))
+        self.assertEqual(roles["Parent"], (GroupIndividual.Role.HEAD, None))
+        self.assertEqual(roles["Child"], (GroupIndividual.Role.SON, None))
+
     def test_head_created_first_is_unaffected(self):
         group_id = self._group_with([
             ("Parent", GroupIndividual.Role.HEAD, GroupIndividual.RecipientType.PRIMARY),
