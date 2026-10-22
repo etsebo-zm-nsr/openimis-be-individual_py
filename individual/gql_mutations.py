@@ -17,7 +17,7 @@ from location.models import Location, LocationManager
 class CreateIndividualInputType(OpenIMISMutation.Input):
     first_name = graphene.String(required=True, max_length=255)
     last_name = graphene.String(required=True, max_length=255)
-    dob = graphene.Date(required=True)
+    dob = graphene.Date(required=False)
     json_ext = graphene.types.json.JSONString(required=False)
     location_id = graphene.Int(required=False)
 

@@ -14,7 +14,7 @@ class Individual(HistoryModel):
     USE_CACHE = False
     first_name = models.CharField(max_length=255, null=False)
     last_name = models.CharField(max_length=255, null=False)
-    dob = core.fields.DateField(null=False)
+    dob = core.fields.DateField(null=True, blank=True)
     # TODO WHY the HistoryModel json_ext was not enough
     json_ext = models.JSONField(db_column="Json_ext", blank=True, default=dict)
 
