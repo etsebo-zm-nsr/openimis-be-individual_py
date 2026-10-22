@@ -4,6 +4,7 @@ from core.test_helpers import LogInHelper
 from individual.models import Individual, GroupIndividual, Group
 from individual.services import GroupAndGroupIndividualAlignmentService
 from individual.tests.test_helpers import (
+    add_individual_to_group,
     create_individual,
     create_group,
 )
@@ -86,17 +87,30 @@ class GroupAndGroupIndividualAlignmentServiceTest(TestCase):
             self.group.id, self.individual.id, None
         )
 
-        # Otherwise individual loc takes group loc
+        # When the group has no loc yet, the non-head keeps its own - it cannot give the
+        # group a location, and blanking its own would only destroy valid data
         self.individual.location = self.loc_a
         self.individual.save(user=self.user)
         self.service.ensure_location_consistent(self.group, self.individual, role)
-        self.assert_group_and_individual_location_equal(
-            self.group.id, self.individual.id, None
-        )
+        self.assertIsNone(Group.objects.get(id=self.group.id).location_id)
+        self.assertEqual(Individual.objects.get(id=self.individual.id).location_id, self.loc_a.id)
 
+        # Once the group has a loc, individual loc takes group loc
         self.group.location = self.loc_b
         self.group.save(user=self.user)
         self.service.ensure_location_consistent(self.group, self.individual, role)
         self.assert_group_and_individual_location_equal(
             self.group.id, self.individual.id, self.loc_b.id
         )
+
+    def test_member_joining_household_without_head_keeps_its_location(self):
+        # The path a bulk import takes: members are added to a group whose head has not
+        # been (or never will be) added, e.g. because the head's record was rejected.
+        self.individual.location = self.loc_a
+        self.individual.save(user=self.user)
+
+        add_individual_to_group(self.username, self.individual, self.group, is_head=False)
+
+        self.assertEqual(Individual.objects.get(id=self.individual.id).location_id, self.loc_a.id,
+                         "a member of a household with no location lost its own location")
+
