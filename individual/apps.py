@@ -96,7 +96,7 @@ DEFAULT_CONFIG = {
         'json_ext.educated_level'
     ],
     "individual_base_fields": [
-        'first_name', 'last_name', 'dob', 'location_name', 'location_code', 'id'
+        'first_name', 'last_name', 'location_name', 'location_code', 'id'
     ]
 }
 

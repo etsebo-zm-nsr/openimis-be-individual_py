@@ -84,7 +84,7 @@ BEGIN
           with updated_individuals as ( UPDATE individual_individual
             SET first_name = COALESCE(ids."Json_ext"->>'first_name', first_name),
                 last_name = COALESCE(ids."Json_ext"->>'last_name', last_name),
-                dob = COALESCE(to_date(ids."Json_ext"->>'dob', 'YYYY-MM-DD'), dob),
+                dob = COALESCE(to_date(NULLIF(TRIM(ids."Json_ext"->>'dob'), ''), 'YYYY-MM-DD'), dob),
                 location_id = loc."LocationId",
                 "DateUpdated" = NOW(),
                 "Json_ext" = ids."Json_ext"
@@ -207,7 +207,7 @@ BEGIN
             UPDATE individual_individual
             SET first_name = COALESCE(ids."Json_ext"->>'first_name', first_name),
                 last_name = COALESCE(ids."Json_ext"->>'last_name', last_name),
-                dob = COALESCE(to_date(ids."Json_ext"->>'dob', 'YYYY-MM-DD'), dob),
+                dob = COALESCE(to_date(NULLIF(TRIM(ids."Json_ext"->>'dob'), ''), 'YYYY-MM-DD'), dob),
                 location_id = loc."LocationId",
                 "DateUpdated" = NOW(),
                 "Json_ext" = ids."Json_ext"

@@ -45,13 +45,13 @@ class BasePythonWorkflowExecutor(metaclass=ABCMeta):
         """
         Validates if DataFrame headers:
         1. Are included in the JSON schema properties.
-        2. Include 'first_name', 'last_name', and 'dob'.
+        2. Include 'first_name' and 'last_name'. 'dob' is allowed but optional.
         3. 'id' is field automatically added to DataFrame which is used for upload.
         4. If action is data upload then 'ID' unique identifier is required as well.
         """
         df_headers = set(self.df.columns)
         schema_properties = set(self.schema.get('properties', {}).keys())
-        schema_properties.update(['recipient_info', 'group_code', 'individual_role'])
+        schema_properties.update(['recipient_info', 'group_code', 'individual_role', 'dob'])
         required_headers = set(IndividualConfig.individual_base_fields)
         if is_update:
             required_headers.add('ID')

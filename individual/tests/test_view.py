@@ -44,8 +44,10 @@ class TestView(APITestCase):
             response['Content-Disposition']
         )
 
-        expected_base_csv_header = 'first_name,last_name,dob,location_name,location_code,id'
+        expected_base_csv_header = 'first_name,last_name,location_name,location_code,id'
         content = b"".join(response.streaming_content).decode('utf-8')
+        # dob is optional but still offered as a template column
+        self.assertIn('dob', content.split('\n')[0].split(','))
         self.assertTrue(
             expected_base_csv_header in content,
             f'Expect csv template header to contain {expected_base_csv_header}, but got {content}'

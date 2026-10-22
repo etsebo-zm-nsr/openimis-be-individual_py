@@ -28,7 +28,6 @@ DECLARE
     failing_entries_invalid_json UUID[];
     failing_entries_first_name UUID[];
     failing_entries_last_name UUID[];
-    failing_entries_dob UUID[];
     total_entries INT;
     total_valid_entries INT;
 BEGIN
@@ -39,14 +38,11 @@ BEGIN
     SELECT ARRAY_AGG("UUID") INTO failing_entries_last_name
     FROM individual_individualdatasource
     WHERE upload_id = current_upload_id AND individual_id IS NULL AND "isDeleted" = False AND NOT "Json_ext" ? 'last_name';
-    SELECT ARRAY_AGG("UUID") INTO failing_entries_dob
-    FROM individual_individualdatasource
-    WHERE upload_id = current_upload_id AND individual_id IS NULL AND "isDeleted" = False AND NOT "Json_ext" ? 'dob';
     SELECT ARRAY_AGG("UUID") INTO failing_entries_invalid_json
     FROM individual_individualdatasource
     WHERE upload_id = current_upload_id AND individual_id IS NULL AND "isDeleted" = False AND NOT validate_json_schema(json_schema, "Json_ext");
     -- If any entries do not meet the criteria or missing required fields, set the error message in the upload table and do not proceed further
-    IF failing_entries_invalid_json IS NOT NULL OR failing_entries_first_name IS NOT NULL OR failing_entries_last_name IS NOT NULL OR failing_entries_dob IS NOT NULL THEN
+    IF failing_entries_invalid_json IS NOT NULL OR failing_entries_first_name IS NOT NULL OR failing_entries_last_name IS NOT NULL THEN
         UPDATE individual_individualdatasourceupload
         SET error = coalesce(error, '{}'::jsonb) || jsonb_build_object('errors', jsonb_build_object(
                             'error', 'Invalid entries',
@@ -54,7 +50,6 @@ BEGIN
                             'upload_id', current_upload_id::text,
                             'failing_entries_first_name', failing_entries_first_name,
                             'failing_entries_last_name', failing_entries_last_name,
-                            'failing_entries_dob', failing_entries_dob,
                             'failing_entries_invalid_json', failing_entries_invalid_json
                         ))
         WHERE "UUID" = current_upload_id;
@@ -71,7 +66,7 @@ BEGIN
                    "Json_ext",
                    "Json_ext"->>'first_name',
                    "Json_ext" ->> 'last_name',
-                   to_date("Json_ext" ->> 'dob', 'YYYY-MM-DD'),
+                   to_date(NULLIF(TRIM("Json_ext" ->> 'dob'), ''), 'YYYY-MM-DD'),
                    loc."LocationId"
             FROM individual_individualdatasource AS ds
             LEFT JOIN "tblLocations" AS loc
@@ -144,7 +139,6 @@ DECLARE
     failing_entries UUID[];
     failing_entries_first_name UUID[];
     failing_entries_last_name UUID[];
-    failing_entries_dob UUID[];
     new_entry_results UUID[];
     new_entry_result UUID;
 BEGIN
@@ -161,24 +155,16 @@ BEGIN
     AND "isDeleted" = False AND NOT "Json_ext" ? 'last_name'
     AND (accepted IS NULL OR "UUID" = ANY(accepted));
 
-    SELECT ARRAY_AGG("UUID") INTO failing_entries_dob
-    FROM individual_individualdatasource
-    WHERE upload_id = current_upload_id AND individual_id IS NULL
-    AND "isDeleted" = False AND NOT "Json_ext" ? 'dob'
-    AND (accepted IS NULL OR "UUID" = ANY(accepted));
-
     -- If any entries do not meet the criteria or missing required fields,
     -- set the error message in the upload table and do not proceed further
-    IF failing_entries_first_name IS NOT NULL OR failing_entries_last_name IS NOT NULL OR
-    failing_entries_dob IS NOT NULL THEN
+    IF failing_entries_first_name IS NOT NULL OR failing_entries_last_name IS NOT NULL THEN
         UPDATE individual_individualdatasourceupload
         SET error = coalesce(error, '{}'::jsonb) || jsonb_build_object('errors', jsonb_build_object(
                             'error', 'Invalid entries',
                             'timestamp', NOW()::text,
                             'upload_id', current_upload_id::text,
                             'failing_entries_first_name', failing_entries_first_name,
-                            'failing_entries_last_name', failing_entries_last_name,
-                            'failing_entries_dob', failing_entries_dob
+                            'failing_entries_last_name', failing_entries_last_name
                         ))
         WHERE "UUID" = current_upload_id;
 
@@ -194,7 +180,7 @@ BEGIN
                    "Json_ext",
                    "Json_ext"->>'first_name',
                    "Json_ext" ->> 'last_name',
-                   to_date("Json_ext" ->> 'dob', 'YYYY-MM-DD'),
+                   to_date(NULLIF(TRIM("Json_ext" ->> 'dob'), ''), 'YYYY-MM-DD'),
                    loc."LocationId"
             FROM individual_individualdatasource AS ds
             LEFT JOIN "tblLocations" AS loc
