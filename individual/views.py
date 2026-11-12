@@ -58,7 +58,7 @@ def get_global_schema_fields():
     schema = json.loads(IndividualConfig.individual_schema)
     # Extract property keys and add additional fields specific to individuals
     schema_properties = set(schema.get('properties', {}).keys())
-    schema_properties.update(['recipient_info', 'individual_role', 'group_code'])
+    schema_properties.update(['recipient_info', 'individual_role', 'group_code', 'dob'])
     return list(schema_properties)
 
 

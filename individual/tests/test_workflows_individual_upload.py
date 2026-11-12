@@ -100,12 +100,14 @@ class ProcessImportIndividualsWorkflowTest(TestCase):
         self.assertIn("Invalid entries", errors['error'])
 
         # Check that the correct failing entries are logged in the error field
+        # dob is optional, so a missing dob must not be reported as a failing entry
         for key in [
-            "failing_entries_last_name", "failing_entries_dob"
+            "failing_entries_last_name"
         ]:
             self.assertIn(key, errors)
             self.assertIn(str(self.invalid_data_source.id), errors[key])
             self.assertNotIn(str(self.valid_data_source.id), errors[key])
+        self.assertNotIn("failing_entries_dob", errors)
 
         # individual_id should not be assigned for any data sources
         data_entries = IndividualDataSource.objects.filter(upload_id=self.upload_uuid)
