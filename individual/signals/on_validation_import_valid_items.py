@@ -216,6 +216,12 @@ class BaseGroupColumnAggregationClass(ItemsUploadTaskCompletionEvent):
 
     @staticmethod
     def _individual_role_parser(individual_role):
+        # A member already in the group had `individual_role` removed from its json_ext by
+        # _clean_json_ext() when its own upload finished, so it arrives here as None.
+        # GroupService.update() only creates rows for individuals not yet assigned and
+        # leaves existing GroupIndividual rows untouched, so no role is needed for them.
+        if not individual_role:
+            return None
         return getattr(GroupIndividual.Role, individual_role.upper(), None)
 
     def _create_group_data_source(self, json_ext_data):
