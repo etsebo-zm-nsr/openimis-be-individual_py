@@ -1,5 +1,7 @@
 import json
+from unittest.mock import patch
 
+from individual.apps import IndividualConfig
 from individual.models import Individual
 from individual.tests.test_helpers import IndividualGQLTestCase, create_individual
 
@@ -32,6 +34,8 @@ class NullableDobGQLTest(IndividualGQLTestCase):
         self.assert_mutation_success(content['data']['createIndividual']['internalId'])
         self.assertIsNone(Individual.objects.get(first_name="NoDob", last_name="Gql").dob)
 
+    # Maker-checker would turn the update into a task; this test is about dob.
+    @patch.object(IndividualConfig, 'check_individual_update', False)
     def test_update_individual_without_dob(self):
         individual = create_individual(self.admin_user.username, {'dob': None})
         content = self._run(f'''
