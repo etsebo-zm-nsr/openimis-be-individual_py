@@ -1,0 +1,25 @@
+name: Zambia module CI
+# Runs this module's tests inside the Zambia assembly (etsebo-zm-nsr/openimis-be_py).
+# The reusable workflow is upstream's ci_module.yml, configured through its inputs.
+# Unlike the ETL modules this keeps the default --keepdb run with migrations: the
+# GraphQL tests need the location data the migrations seed.
+on:
+  push:
+    branches:
+      - 'zm/**'
+  pull_request:
+    branches:
+      - 'zm/**'
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  call:
+    name: Module tests
+    uses: etsebo-zm-nsr/openimis-be_py/.github/workflows/ci_module.yml@zm/develop
+    with:
+      be_repository: etsebo-zm-nsr/openimis-be_py
+      # The assembly branch named like the branch under test, else the PR base,
+      # else zm/develop.
+      be_fallback_branch: zm/develop
+      run_all_tests: false
