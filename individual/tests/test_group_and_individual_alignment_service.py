@@ -113,4 +113,3 @@ class GroupAndGroupIndividualAlignmentServiceTest(TestCase):
 
         self.assertEqual(Individual.objects.get(id=self.individual.id).location_id, self.loc_a.id,
                          "a member of a household with no location lost its own location")
-
